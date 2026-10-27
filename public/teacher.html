@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="ku" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>پانێڵی مامۆستا</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Tahoma, sans-serif; background: #f4f6f9; padding: 30px; }
+    .box { max-width: 700px; margin: auto; background: #fff; padding: 25px;
+           border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,.08); }
+    h1 { color: #1f3a93; text-align: center; margin-bottom: 20px; }
+    h2 { color: #333; margin: 20px 0 10px; }
+    input, button { width: 100%; padding: 12px; margin: 8px 0;
+                    border: 1px solid #ccc; border-radius: 8px; font-size: 15px; }
+    button { background: #1f3a93; color: #fff; border: none; cursor: pointer; }
+    button:hover { background: #162a6b; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th, td { border: 1px solid #ddd; padding: 10px; text-align: center; }
+    th { background: #1f3a93; color: #fff; }
+    .msg { text-align: center; margin-top: 10px; padding: 10px; border-radius: 6px; }
+    .success { background: #d4edda; color: #155724; }
+    .error { background: #f8d7da; color: #721c24; }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h1>بارکردنی نمرەی قوتابیان</h1>
+
+    <form id="form">
+      <input type="text" id="studentId" placeholder="ناسنامەی قوتابی (بۆ نموونە S001)" required>
+      <input type="text" id="course" placeholder="ناوی کۆرس" required>
+      <input type="number" id="score" placeholder="نمرە" min="0" max="100" required>
+      <button type="submit">بارکردنی نمرە</button>
+    </form>
+
+    <p class="msg" id="msg"></p>
+
+    <h2>هەموو نمرەکان</h2>
+    <table id="table">
+      <thead>
+        <tr><th>قوتابی</th><th>کۆرس</th><th>نمرە</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <script>
+    const API = window.location.origin;
+
+    document.getElementById('form').onsubmit = async (e) => {
+      e.preventDefault();
+      const msg = document.getElementById('msg');
+
+      const data = {
+        studentId: document.getElementById('studentId').value.trim(),
+        course: document.getElementById('course').value.trim(),
+        score: document.getElementById('score').value
+      };
+
+      try {
+        const res = await fetch(`${API}/api/scores`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+
+        const result = await res.json();
+
+        if (res.ok) {
+          msg.textContent = '✅ نمرە بە سەرکەوتوویی بارکرا';
+          msg.className = 'msg success';
+          e.target.reset();
+          loadAll();
+        } else {
+          msg.textContent = '❌ هەڵە: ' + (result.error || 'نەزانراو');
+          msg.className = 'msg error';
+        }
+      } catch (err) {
+        msg.textContent = '❌ هەڵەی پەیوەندی';
+        msg.className = 'msg error';
+      }
+    };
+
+    async function loadAll() {
+      try {
+        const res = await fetch(`${API}/api/all-scores`);
+        const list = await res.json();
+
+        document.querySelector('#table tbody').innerHTML = list.map(s =>
+          `<tr><td>${s.studentId}</td><td>${s.course}</td><td>${s.score}</td></tr>`
+        ).join('');
+      } catch (err) {
+        console.error('Load error:', err);
+      }
+    }
+
+    loadAll();
+  </script>
+</body>
+</html>
